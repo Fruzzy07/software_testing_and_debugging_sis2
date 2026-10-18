@@ -6,8 +6,7 @@
 |---|---|
 | Tool | **Claude Code**, the VS Code extension (agent mode: it reads and writes files and runs commands in the project) |
 | Model | **Claude Opus 5.5** (`claude-opus-5-5`) |
-| Effort level | **TODO: effort setting** |
-| Date | 2026-10-18 |
+| Effort level | Medium |
 
 ## Prompt 1: the task
 
