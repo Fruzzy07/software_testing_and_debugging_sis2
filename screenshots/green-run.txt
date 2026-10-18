@@ -1,0 +1,21 @@
+﻿
+Running 9 tests using 4 workers
+
+ 
+  ok 1 [setup] › tests\auth.setup.ts:7:6 › sign in a fresh customer and save the session (7.5s)
+  ok 3 [chromium] › tests\login.spec.ts:14:7 › TC-02 Log in › invalid credentials show an error and stay on the login page (3.3s)
+  ok 2 [chromium] › tests\login.spec.ts:5:7 › TC-02 Log in › valid credentials open the account page (4.1s)
+  ok 4 [chromium] › tests\compare-products.spec.ts:7:7 › TC-04 Compare two products › the claw hammer is cheaper than the bolt cutters, and the comparison table agrees (5.1s)
+  ok 5 [chromium] › tests\buy-product.spec.ts:10:7 › TC-03 Buy a product › a signed-in customer buys two claw hammers and gets an invoice (7.4s)
+  ok 7 [chromium] › tests\register.spec.ts:23:7 › TC-01 Register a new customer › registering with an email that already exists is rejected (3.4s)
+  ok 8 [chromium] › tests\reset-password.spec.ts:5:7 › TC-05 Reset a password › a known email gets a success confirmation (2.8s)
+  ok 6 [chromium] › tests\register.spec.ts:4:7 › TC-01 Register a new customer › a new customer registers with a unique email, lands on login and can sign in (4.6s)
+  ok 9 [chromium] › tests\reset-password.spec.ts:17:7 › TC-05 Reset a password › an unknown email is rejected with an error (1.8s)
+
+  9 passed (20.1s)
+
+To open last HTML report run:
+
+  npx playwright show-report
+
+
