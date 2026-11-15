@@ -93,7 +93,7 @@ key `page.forgot-password.confirm` instead of a sentence. See Review.md, finding
 
 **Pipeline** ([.github/workflows/playwright.yml](.github/workflows/playwright.yml)):
 
-- runs on every `push` and every `pull_request`, with no branch filter, plus `workflow_dispatch` for manual timing runs;
+- runs on `ubuntu-24.04` (pinned: `ubuntu-latest` is now Ubuntu 26, for which Playwright 1.55 cannot install system dependencies) on every `push` and every `pull_request`, with no branch filter, plus `workflow_dispatch` for manual timing runs;
 - `actions/setup-node` with `cache: npm`, then `npm ci`, then `npx playwright install --with-deps chromium`;
 - the full suite with no `--grep` or `--project` filter, split into 4 shards (`--shard=i/4`) that run in parallel. `fail-fast: false` means one red shard does not cancel the others;
 - the `Merge reports` job merges the shards' blob reports into one HTML report and one JUnit file ([merge.config.ts](merge.config.ts));

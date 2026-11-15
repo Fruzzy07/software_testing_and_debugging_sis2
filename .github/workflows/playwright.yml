@@ -18,7 +18,7 @@ concurrency:
 jobs:
   test:
     name: Tests (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # Playwright 1.55 has no --with-deps package list for Ubuntu 26 (the new ubuntu-latest)
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -27,9 +27,9 @@ jobs:
         shardIndex: ${{ fromJSON(inputs.shards == '1' && '[1]' || '[1, 2, 3, 4]') }}
         shardTotal: ${{ fromJSON(inputs.shards == '1' && '[1]' || '[4]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm                 # caches ~/.npm, keyed on package-lock.json
@@ -49,7 +49,7 @@ jobs:
 
       - name: Upload blob report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: blob-report-${{ matrix.shardIndex }}
           path: blob-report
@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload traces and JUnit
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-${{ matrix.shardIndex }}
           path: |
@@ -69,11 +69,11 @@ jobs:
     name: Merge reports
     if: ${{ !cancelled() }}
     needs: [test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # Playwright 1.55 has no --with-deps package list for Ubuntu 26 (the new ubuntu-latest)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -82,7 +82,7 @@ jobs:
         run: npm ci
 
       - name: Download blob reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: all-blob-reports
           pattern: blob-report-*
@@ -92,14 +92,14 @@ jobs:
         run: npx playwright merge-reports --config merge.config.ts ./all-blob-reports
 
       - name: Upload HTML report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: playwright-report
           path: playwright-report
           retention-days: 14
 
       - name: Upload merged JUnit
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: junit-report
           path: reports/junit-merged.xml
