@@ -7,9 +7,10 @@ runners with a 403 "Just a moment..." bot check. A home connection is let throug
 
 Usage (PowerShell, from the repository root):
   1. GitHub -> Settings -> Actions -> Runners -> New self-hosted runner -> Windows,
-     copy the token from the "--token" line (valid for 1 hour).
+     copy only the value after "--token" (valid for 1 hour). Do not share it.
   2. .\ci\setup-self-hosted-runners.ps1 -Token <TOKEN>
-     (first time only; later runs just start the runners: .\ci\setup-self-hosted-runners.ps1)
+     Without -Token the script asks for it. Afterwards, just start the runners:
+     .\ci\setup-self-hosted-runners.ps1
 Stop the runners by closing their windows.
 #>
 param(
@@ -20,6 +21,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 New-Item -ItemType Directory -Force $Root | Out-Null
 $zip = Join-Path $Root 'actions-runner.zip'
@@ -27,12 +29,20 @@ $zip = Join-Path $Root 'actions-runner.zip'
 for ($i = 1; $i -le $Count; $i++) {
   $dir = Join-Path $Root "toolshop-$i"
   if (-not (Test-Path (Join-Path $dir '.runner'))) {
-    if (-not $Token) { throw "Runner toolshop-$i is not registered yet: pass -Token <TOKEN>." }
+    if (-not $Token) {
+      Write-Host 'Paste the token from the "--token" line (right-click pastes in this window), then press Enter.'
+      $Token = (Read-Host 'Runner registration token').Trim()
+      if (-not $Token) { throw 'No token given.' }
+      Clear-Host   # do not leave the token on screen
+    }
     if (-not (Test-Path $zip)) {
-      $tag = (Invoke-RestMethod 'https://api.github.com/repos/actions/runner/releases/latest').tag_name
+      # The "latest" page redirects to .../tag/vX.Y.Z; reading the redirect avoids the rate-limited API.
+      $req = [System.Net.HttpWebRequest]::Create('https://github.com/actions/runner/releases/latest')
+      $req.AllowAutoRedirect = $false
+      $resp = $req.GetResponse(); $tag = ($resp.Headers['Location'] -split '/')[-1]; $resp.Close()
       $ver = $tag.TrimStart('v')
       Write-Host "Downloading actions runner $ver"
-      Invoke-WebRequest "https://github.com/actions/runner/releases/download/$tag/actions-runner-win-x64-$ver.zip" -OutFile $zip
+      Invoke-WebRequest "https://github.com/actions/runner/releases/download/$tag/actions-runner-win-x64-$ver.zip" -OutFile $zip -UseBasicParsing
     }
     New-Item -ItemType Directory -Force $dir | Out-Null
     Expand-Archive $zip -DestinationPath $dir -Force
