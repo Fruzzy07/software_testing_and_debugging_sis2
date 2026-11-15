@@ -91,9 +91,24 @@ key `page.forgot-password.confirm` instead of a sentence. See Review.md, finding
 
 **CI system:** GitHub Actions. The repository already lives on GitHub, so Actions needs no server of its own and no webhooks or tunnels (unlike a local Jenkins). It is free for public repositories, and its job matrix gives sharding without extra tooling.
 
+**Runners: self-hosted for the tests.** The first runs on GitHub-hosted `ubuntu` runners failed in every shard: the login form never appeared. A probe step on the runner showed why. `practicesoftwaretesting.com` sits behind Cloudflare, which answers datacenter IPs with HTTP 403 and a "Just a moment… Performing security verification" bot check instead of the app. The API (`api.practicesoftwaretesting.com`) still answered 200. The same probe from a home connection gets the real login page. Because the suite tests a third-party site whose bot protection is not ours to switch off, the `test` job runs on four [self-hosted runners](ci/setup-self-hosted-runners.ps1) (label `toolshop`) on my Windows machine, one per shard. The `Merge reports` job needs no access to the site and stays on a GitHub-hosted `ubuntu-24.04` runner.
+
+Consequences:
+
+- runs execute only while the runners on that machine are switched on; otherwise jobs wait in the queue;
+- on Windows, `--with-deps` installs nothing (system packages are a Linux thing), and browsers stay installed between runs, so the install step is fast after the first run;
+- for safety, the `test` job is skipped for pull requests from forks: a self-hosted runner on a public repository must not run strangers' code.
+
+Starting the runners (PowerShell, from the repository root; the token comes from Settings → Actions → Runners → New self-hosted runner):
+
+```powershell
+.\ci\setup-self-hosted-runners.ps1 -Token <TOKEN>   # first time: register 4 runners and start them
+.\ci\setup-self-hosted-runners.ps1                  # later: just start them
+```
+
 **Pipeline** ([.github/workflows/playwright.yml](.github/workflows/playwright.yml)):
 
-- runs on `ubuntu-24.04` (pinned: `ubuntu-latest` is now Ubuntu 26, for which Playwright 1.55 cannot install system dependencies) on every `push` and every `pull_request`, with no branch filter, plus `workflow_dispatch` for manual timing runs;
+- runs on every `push` and every `pull_request`, with no branch filter, plus `workflow_dispatch` for manual timing runs;
 - `actions/setup-node` with `cache: npm`, then `npm ci`, then `npx playwright install --with-deps chromium`;
 - the full suite with no `--grep` or `--project` filter, split into 4 shards (`--shard=i/4`) that run in parallel. `fail-fast: false` means one red shard does not cancel the others;
 - the `Merge reports` job merges the shards' blob reports into one HTML report and one JUnit file ([merge.config.ts](merge.config.ts));
@@ -132,7 +147,7 @@ To open a trace, download `playwright-report` or `test-results-N` from the run p
 
 Median of 3 runs via `workflow_dispatch`.
 
-Conclusion: TODO (fill in after the runs). The suite has only 8 tests (about 20 s of test time), while each shard spends about a minute on checkout, `npm ci` and the browser install, and also repeats the login setup. So sharding is expected to save little or nothing here; it pays off once the suite runs for several minutes.
+Conclusion: TODO (fill in after the runs). The suite has only 8 tests (about 20 s of test time). Each shard still pays for checkout, `npm ci` and the login setup, and the 4 shards share one machine's CPU and network. So sharding is expected to save little here; it pays off once the suite runs for several minutes.
 
 ### Running locally in CI mode
 

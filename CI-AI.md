@@ -41,3 +41,16 @@ Not checkable locally, verified on GitHub: the npm cache restore on the second r
 - **Browser cache:** not added. The Playwright docs say restoring it takes about as long as downloading the browsers.
 - **Projects:** only Chromium, as before.
 - **Timing table:** the numbers are written in by hand from the GitHub Actions run pages, not by the AI.
+
+## Follow-up session: making it green on GitHub
+
+Follow-up prompts, in order: "Yes, push both" (create `main` from `sis2-submission` and push it together with `ci-pipeline`), "Signed in" (so the agent could read job logs in the built-in browser), "Self-hosted runner" (my choice between the two options it offered).
+
+| Run | What failed | Diagnosis | Fix |
+|---|---|---|---|
+| 1 | `Install Playwright browsers`, all shards, after 13 s | `ubuntu-latest` had moved to Ubuntu 26; Playwright 1.55 has no `--with-deps` package list for it | pin `ubuntu-24.04`; actions bumped to v5 |
+| 2 | `Run Playwright tests`, all shards: `auth.setup.ts` times out waiting for `getByTestId('email')` | the same 4 shards in parallel passed locally, so the cause was the environment. A temporary probe step (on a throw-away `ci-debug` branch, deleted afterwards) showed HTTP 403 and the Cloudflare page "Just a moment… Performing security verification" for the web app, while the API returned 200 | tests moved to self-hosted runners on my machine (`ci/setup-self-hosted-runners.ps1`); `Merge reports` stays on GitHub-hosted Ubuntu |
+
+Getting around Cloudflare's bot check (stealth plugins, fake user agents) was ruled out on purpose: the protection belongs to the site owner. The other option offered was running the open-source Toolshop in Docker inside CI. It was not chosen because the build is heavy and riskier before the deadline.
+
+The workflow skips the `test` job for pull requests from forks. A self-hosted runner on a public repository would otherwise run strangers' code on my computer.

@@ -18,7 +18,13 @@ concurrency:
 jobs:
   test:
     name: Tests (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
-    runs-on: ubuntu-24.04   # Playwright 1.55 has no --with-deps package list for Ubuntu 26 (the new ubuntu-latest)
+    # The Toolshop sits behind Cloudflare, which answers GitHub-hosted runners
+    # (datacenter IPs) with a 403 bot check instead of the app. The tests therefore
+    # run on self-hosted runners on the student's own machine; see
+    # ci/setup-self-hosted-runners.ps1. Four runners there = four parallel shards.
+    runs-on: [self-hosted, toolshop]
+    # A self-hosted runner on a public repository must never run code from forks.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -69,7 +75,9 @@ jobs:
     name: Merge reports
     if: ${{ !cancelled() }}
     needs: [test]
-    runs-on: ubuntu-24.04   # Playwright 1.55 has no --with-deps package list for Ubuntu 26 (the new ubuntu-latest)
+    # Merging needs no access to the site, so it runs on a GitHub-hosted runner.
+    # Pinned: ubuntu-latest is now Ubuntu 26, which Playwright 1.55 does not support.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 
