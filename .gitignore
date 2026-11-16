@@ -6,3 +6,7 @@ node_modules/
 /playwright/.auth/
 /test-results-bugs/
 .claude/
+/reports/
+/all-blob-reports/
+/.act-artifacts/
+.secrets
