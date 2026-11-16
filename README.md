@@ -97,6 +97,8 @@ Consequences:
 
 - runs execute only while the runners on that machine are switched on; otherwise jobs wait in the queue;
 - on Windows, `--with-deps` installs nothing (system packages are a Linux thing), and browsers stay installed between runs, so the install step is fast after the first run;
+- npm cache: on the GitHub-hosted `Merge reports` job, `setup-node` restores it ("Cache restored successfully" in the log). On the Windows runners, `setup-node` cannot upload its cache archive (`tar: Cannot write: Broken pipe`, a known limitation of self-hosted Windows runners without zstd). The job still passes, and the npm cache in `%LOCALAPPDATA%
+pm-cache` stays on that disk between runs anyway;
 - for safety, the `test` job is skipped for pull requests from forks: a self-hosted runner on a public repository must not run strangers' code.
 
 Starting the runners (PowerShell, from the repository root; the token comes from Settings → Actions → Runners → New self-hosted runner):
