@@ -144,12 +144,23 @@ To open a trace, download `playwright-report` or `test-results-N` from the run p
 
 | Configuration | Total run time | Run tests step (slowest shard) | Run |
 | --- | --- | --- | --- |
-| 1 job, no sharding | TODO | TODO | [run](TODO) |
-| 4 shards + merge | TODO | TODO | [run](TODO) |
+| 1 job, no sharding | 1 min 32 s | 25 s | [run](https://github.com/Fruzzy07/software_testing_and_debugging_sis2/actions/runs/43856209399) |
+| 4 shards + merge | 2 min 3 s | 22 s | [run](https://github.com/Fruzzy07/software_testing_and_debugging_sis2/actions/runs/43857371382) |
 
-Median of 3 runs via `workflow_dispatch`.
+Median of 3 runs each via `workflow_dispatch` on `main`, run one at a time on the self-hosted runners. "Total run time" is the run page's total duration. "Run tests step" is the `Run Playwright tests` step of the slowest shard.
 
-Conclusion: TODO (fill in after the runs). The suite has only 8 tests (about 20 s of test time). Each shard still pays for checkout, `npm ci` and the login setup, and the 4 shards share one machine's CPU and network. So sharding is expected to save little here; it pays off once the suite runs for several minutes.
+| Configuration | Run | Total | Slowest test step |
+| --- | --- | --- | --- |
+| 1 shard | [#10](https://github.com/Fruzzy07/software_testing_and_debugging_sis2/actions/runs/43856209399) | 1 min 32 s | 25 s |
+| 1 shard | [#11](https://github.com/Fruzzy07/software_testing_and_debugging_sis2/actions/runs/43856612200) | 1 min 28 s | 25 s |
+| 1 shard | [#12](https://github.com/Fruzzy07/software_testing_and_debugging_sis2/actions/runs/43856992196) | 1 min 34 s | 25 s |
+| 4 shards | [#13](https://github.com/Fruzzy07/software_testing_and_debugging_sis2/actions/runs/43857371382) | 2 min 3 s | 22 s (20, 22, 19, 13) |
+| 4 shards | [#14](https://github.com/Fruzzy07/software_testing_and_debugging_sis2/actions/runs/43857816781) | 1 min 33 s | 21 s (15, 17, 18, 21) |
+| 4 shards | [#15](https://github.com/Fruzzy07/software_testing_and_debugging_sis2/actions/runs/43858192741) | 2 min 19 s | 45 s (21, 23, 24, 45) |
+
+**Conclusion:** for this suite, sharding did not make CI faster. The test step barely shrank (25 s → 22 s), and the whole run got about 30 s slower (1 min 32 s → 2 min 3 s).
+
+The suite has only 8 tests, about 25 s of test time. With 4 shards, all four jobs run checkout, `setup-node` and `npm ci` at the same time on one machine. Each shard also runs the login setup again and uploads its own two artefacts over a home connection. Those fixed costs grow with the number of shards and outweigh the few seconds saved on tests. The `Merge reports` job runs in both setups, so it does not explain the difference. Sharding starts to pay off when the test step itself takes several minutes, or when shards run on separate machines.
 
 ### Running locally in CI mode
 

@@ -54,3 +54,7 @@ Follow-up prompts, in order: "Yes, push both" (create `main` from `sis2-submissi
 Getting around Cloudflare's bot check (stealth plugins, fake user agents) was ruled out on purpose: the protection belongs to the site owner. The other option offered was running the open-source Toolshop in Docker inside CI. It was not chosen because the build is heavy and riskier before the deadline.
 
 The workflow skips the `test` job for pull requests from forks. A self-hosted runner on a public repository would otherwise run strangers' code on my computer.
+
+## Timing runs
+
+After the PR was merged and `main` became the default branch, the agent started 6 `workflow_dispatch` runs one at a time from the signed-in browser pane (3 with `shards = 1`, 3 with `shards = 4`). It read the total durations from the run pages and the `Run Playwright tests` step times from the job log timestamps. The medians and the conclusion in the README come from those runs. The agent's first draft of the conclusion blamed the `Merge reports` job, but that job runs in both setups; this was caught on review and corrected.
